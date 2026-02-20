@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>404 — Level Not Found 🕹️</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0d1117;
+    color: #c9d1d9;
+    font-family: 'Press Start 2P', monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    text-align: center;
+    padding: 20px;
+    gap: 24px;
+  }
+
+  .glitch {
+    font-size: 72px;
+    color: #f85149;
+    text-shadow:
+      3px 0 #58a6ff,
+      -3px 0 #3fb950,
+      0 0 20px rgba(248, 81, 73, 0.5);
+    animation: glitch 2s infinite;
+  }
+
+  @keyframes glitch {
+    0%, 90%, 100% { transform: translate(0); }
+    92% { transform: translate(-2px, 1px); }
+    94% { transform: translate(2px, -1px); }
+    96% { transform: translate(-1px, -1px); }
+    98% { transform: translate(1px, 1px); }
+  }
+
+  h2 {
+    font-size: 16px;
+    color: #58a6ff;
+    line-height: 1.6;
+  }
+
+  .msg {
+    font-size: 10px;
+    color: #8b949e;
+    line-height: 2;
+  }
+
+  .coin {
+    font-size: 40px;
+    animation: bounce 1s ease-in-out infinite;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+
+  a.home {
+    font-size: 11px;
+    color: #3fb950;
+    text-decoration: none;
+    border: 2px solid #3fb950;
+    padding: 12px 24px;
+    transition: all 0.2s;
+  }
+
+  a.home:hover {
+    background: #3fb950;
+    color: #0d1117;
+    box-shadow: 0 0 16px rgba(63, 185, 80, 0.5);
+  }
+
+  footer {
+    position: fixed;
+    bottom: 16px;
+    font-size: 8px;
+  }
+  footer a { color: #484f58; text-decoration: none; }
+  footer a:hover { color: #8b949e; }
+</style>
+</head>
+<body>
+
+  <div class="glitch">404</div>
+  <h2>Level Not Found</h2>
+  <div class="coin">🕹️</div>
+  <div class="msg">
+    The page you're looking for has been<br>
+    eaten by a bug. 🐛<br><br>
+    Insert coin to continue.
+  </div>
+  <a class="home" href="/ship-it-arcade/">← Return to Arcade</a>
+
+  <footer>
+    <a href="https://github.com" target="_blank" rel="noopener">Powered by GitHub</a>
+  </footer>
+
+</body>
+</html>

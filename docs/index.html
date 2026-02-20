@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ship It Arcade 🚀</title>
+<link rel="stylesheet" href="https://unpkg.com/@primer/css@21/dist/primer.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0d1117;
+    color: #c9d1d9;
+    font-family: 'Press Start 2P', monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  #game-wrapper {
+    position: relative;
+    border: 2px solid #3fb950;
+    box-shadow: 0 0 20px rgba(63, 185, 80, 0.3), inset 0 0 20px rgba(63, 185, 80, 0.05);
+    border-radius: 4px;
+  }
+
+  canvas {
+    display: block;
+    background: #0d1117;
+    image-rendering: pixelated;
+  }
+
+  #hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 14px;
+    font-size: 11px;
+    color: #3fb950;
+    pointer-events: none;
+    text-shadow: 0 0 6px rgba(63, 185, 80, 0.6);
+  }
+
+  #hud span { display: inline-block; }
+
+  .overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(13, 17, 23, 0.92);
+    z-index: 10;
+    text-align: center;
+    gap: 16px;
+  }
+
+  .overlay.hidden { display: none; }
+
+  .overlay h1 {
+    font-size: 28px;
+    color: #3fb950;
+    text-shadow: 0 0 20px rgba(63, 185, 80, 0.7);
+    line-height: 1.4;
+  }
+
+  .overlay h2 {
+    font-size: 16px;
+    color: #58a6ff;
+    text-shadow: 0 0 10px rgba(88, 166, 255, 0.5);
+  }
+
+  .overlay .subtitle {
+    font-size: 10px;
+    color: #8b949e;
+    line-height: 1.8;
+  }
+
+  .overlay .prompt {
+    font-size: 12px;
+    color: #58a6ff;
+    animation: blink 1s step-end infinite;
+  }
+
+  .overlay .score-display {
+    font-size: 22px;
+    color: #f0883e;
+    text-shadow: 0 0 12px rgba(240, 136, 62, 0.6);
+  }
+
+  .overlay .high-score {
+    font-size: 10px;
+    color: #d2a8ff;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .btn-row a, .btn-row button {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    cursor: pointer;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  #controls-hint {
+    margin-top: 10px;
+    font-size: 9px;
+    color: #484f58;
+    text-align: center;
+    line-height: 1.8;
+  }
+
+  footer {
+    margin-top: 14px;
+    font-size: 8px;
+  }
+
+  footer a {
+    color: #484f58;
+    text-decoration: none;
+  }
+  footer a:hover { color: #8b949e; }
+
+  @media (max-width: 500px) {
+    .overlay h1 { font-size: 18px; }
+    .overlay h2 { font-size: 12px; }
+    .overlay .score-display { font-size: 16px; }
+    #hud { font-size: 9px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="game-wrapper">
+  <canvas id="game"></canvas>
+
+  <div id="hud">
+    <span id="hud-score">SCORE: 0</span>
+    <span id="hud-lives">❤️❤️❤️</span>
+    <span id="hud-hi">HI: 0</span>
+  </div>
+
+  <!-- Start Screen -->
+  <div class="overlay" id="start-screen">
+    <h1>🚀 SHIP IT!<br>ARCADE</h1>
+    <h2>Catch packages. Dodge bugs.</h2>
+    <div class="subtitle">
+      📦 Package = +10 pts<br>
+      ⭐ Golden Package = +50 pts<br>
+      🐛 Bug = -1 life
+    </div>
+    <div class="prompt">[ PRESS SPACE TO START ]</div>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div class="overlay hidden" id="gameover-screen">
+    <h1>GAME OVER</h1>
+    <div class="score-display" id="final-score">0</div>
+    <div class="high-score" id="final-hi"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-again" type="button">Play Again</button>
+      <a class="btn btn-outline" id="btn-submit" href="#" target="_blank" rel="noopener">Submit Score</a>
+    </div>
+    <div class="prompt" style="margin-top:4px">[ PRESS SPACE ]</div>
+  </div>
+</div>
+
+<div id="controls-hint">
+  ⌨️ Arrow Keys / A,D &nbsp;|&nbsp; 📱 Tap left/right
+</div>
+
+<footer>
+  <a href="https://github.com" target="_blank" rel="noopener">Powered by GitHub</a>
+</footer>
+
+<script>
+(() => {
+  // --- Canvas Setup ---
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const W = 480, H = 640;
+  canvas.width = W;
+  canvas.height = H;
+
+  // Responsive scaling
+  function resize() {
+    const maxW = Math.min(window.innerWidth - 20, 480);
+    const maxH = Math.min(window.innerHeight - 100, 640);
+    const scale = Math.min(maxW / W, maxH / H);
+    canvas.style.width = (W * scale) + 'px';
+    canvas.style.height = (H * scale) + 'px';
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // --- Audio ---
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  let audioCtx;
+  function ensureAudio() {
+    if (!audioCtx) audioCtx = new AudioCtx();
+  }
+  function beep(freq, dur, type = 'square') {
+    try {
+      ensureAudio();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + dur);
+    } catch(e) {}
+  }
+  function sndCatch()  { beep(880, 0.1); setTimeout(() => beep(1100, 0.08), 60); }
+  function sndGold()   { beep(1200, 0.1); setTimeout(() => beep(1500, 0.08), 60); setTimeout(() => beep(1800, 0.06), 120); }
+  function sndHit()    { beep(200, 0.25, 'sawtooth'); }
+  function sndGameOver() { beep(300, 0.2, 'sawtooth'); setTimeout(() => beep(200, 0.3, 'sawtooth'), 200); }
+
+  // --- Game State ---
+  const PLAYER_W = 36, PLAYER_H = 36;
+  const ITEM_SIZE = 24;
+  const SPEED_INCREASE_INTERVAL = 30; // seconds
+
+  let state = 'start'; // start | playing | gameover
+  let score, lives, hiScore, player, items, particles;
+  let baseSpeed, speedMult, elapsed, lastSpawn, spawnInterval, lastTime;
+  let keys = {};
+
+  hiScore = parseInt(localStorage.getItem('shipItHiScore')) || 0;
+
+  const $startScreen = document.getElementById('start-screen');
+  const $gameoverScreen = document.getElementById('gameover-screen');
+  const $hudScore = document.getElementById('hud-score');
+  const $hudLives = document.getElementById('hud-lives');
+  const $hudHi = document.getElementById('hud-hi');
+  const $finalScore = document.getElementById('final-score');
+  const $finalHi = document.getElementById('final-hi');
+  const $btnAgain = document.getElementById('btn-again');
+  const $btnSubmit = document.getElementById('btn-submit');
+
+  function updateHUD() {
+    $hudScore.textContent = 'SCORE: ' + score;
+    $hudLives.textContent = '❤️'.repeat(Math.max(0, lives));
+    $hudHi.textContent = 'HI: ' + hiScore;
+  }
+
+  // --- Stars background ---
+  const stars = [];
+  for (let i = 0; i < 80; i++) {
+    stars.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 1.5 + 0.5,
+      speed: Math.random() * 0.3 + 0.1,
+      alpha: Math.random() * 0.6 + 0.2
+    });
+  }
+
+  function drawStars(dt) {
+    stars.forEach(s => {
+      s.y += s.speed * dt * 60;
+      if (s.y > H) { s.y = 0; s.x = Math.random() * W; }
+      ctx.globalAlpha = s.alpha;
+      ctx.fillStyle = '#8b949e';
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  // --- Particles ---
+  function spawnParticles(x, y, color, count) {
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x, y,
+        vx: (Math.random() - 0.5) * 4,
+        vy: (Math.random() - 0.5) * 4 - 2,
+        life: 0.5 + Math.random() * 0.3,
+        maxLife: 0.5 + Math.random() * 0.3,
+        color,
+        size: 2 + Math.random() * 3
+      });
+    }
+  }
+
+  function updateParticles(dt) {
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx * dt * 60;
+      p.y += p.vy * dt * 60;
+      p.vy += 3 * dt;
+      p.life -= dt;
+      if (p.life <= 0) { particles.splice(i, 1); continue; }
+      ctx.globalAlpha = p.life / p.maxLife;
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // --- Items ---
+  function spawnItem() {
+    const r = Math.random();
+    let type, emoji;
+    if (r < 0.20) {
+      type = 'bug'; emoji = '🐛';
+    } else if (r < 0.28) {
+      type = 'gold'; emoji = '⭐';
+    } else {
+      type = 'package'; emoji = '📦';
+    }
+    items.push({
+      x: ITEM_SIZE / 2 + Math.random() * (W - ITEM_SIZE),
+      y: -ITEM_SIZE,
+      type,
+      emoji,
+      speed: (1.5 + Math.random() * 1.5) * speedMult
+    });
+  }
+
+  // --- Init ---
+  function initGame() {
+    score = 0;
+    lives = 3;
+    player = { x: W / 2, y: H - 50, speed: 5 };
+    items = [];
+    particles = [];
+    baseSpeed = 1;
+    speedMult = 1;
+    elapsed = 0;
+    lastSpawn = 0;
+    spawnInterval = 0.7;
+    lastTime = performance.now();
+    updateHUD();
+  }
+
+  function startGame() {
+    ensureAudio();
+    initGame();
+    state = 'playing';
+    $startScreen.classList.add('hidden');
+    $gameoverScreen.classList.add('hidden');
+  }
+
+  function endGame() {
+    state = 'gameover';
+    sndGameOver();
+    if (score > hiScore) {
+      hiScore = score;
+      localStorage.setItem('shipItHiScore', hiScore);
+    }
+    $finalScore.textContent = score + ' PTS';
+    $finalHi.textContent = score >= hiScore ? '🏆 NEW HIGH SCORE!' : 'High Score: ' + hiScore;
+    $btnSubmit.href = 'https://github.com/ashleywolf/ship-it-arcade/issues/new?title='
+      + encodeURIComponent('🏆 Score Submission: ' + score + ' pts')
+      + '&body=' + encodeURIComponent('I scored **' + score + '** points in Ship It Arcade! 🚀📦\n\n'
+        + '- High Score: ' + hiScore + '\n'
+        + '- Date: ' + new Date().toISOString().split('T')[0] + '\n');
+    $gameoverScreen.classList.remove('hidden');
+    updateHUD();
+  }
+
+  // --- Draw Entities ---
+  function drawPlayer() {
+    ctx.font = PLAYER_H + 'px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🚀', player.x, player.y);
+
+    // Thruster glow
+    ctx.shadowColor = '#3fb950';
+    ctx.shadowBlur = 10 + Math.random() * 6;
+    ctx.fillStyle = '#3fb950';
+    ctx.fillRect(player.x - 4, player.y + PLAYER_H / 2 + 2, 8, 4 + Math.random() * 4);
+    ctx.shadowBlur = 0;
+  }
+
+  function drawItems() {
+    ctx.font = ITEM_SIZE + 'px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    items.forEach(item => {
+      if (item.type === 'gold') {
+        ctx.shadowColor = '#f0883e';
+        ctx.shadowBlur = 12;
+      }
+      ctx.fillText(item.emoji, item.x, item.y);
+      ctx.shadowBlur = 0;
+    });
+  }
+
+  // --- Scanlines ---
+  function drawScanlines() {
+    ctx.fillStyle = 'rgba(0,0,0,0.06)';
+    for (let y = 0; y < H; y += 3) {
+      ctx.fillRect(0, y, W, 1);
+    }
+  }
+
+  // --- Update ---
+  function update(dt) {
+    if (state !== 'playing') return;
+
+    elapsed += dt;
+
+    // Increase difficulty
+    speedMult = 1 + Math.floor(elapsed / SPEED_INCREASE_INTERVAL) * 0.25;
+
+    // Spawn items
+    lastSpawn += dt;
+    const curInterval = Math.max(0.3, spawnInterval - elapsed * 0.003);
+    if (lastSpawn >= curInterval) {
+      spawnItem();
+      lastSpawn = 0;
+    }
+
+    // Player movement
+    let dx = 0;
+    if (keys['ArrowLeft'] || keys['KeyA']) dx = -1;
+    if (keys['ArrowRight'] || keys['KeyD']) dx = 1;
+    player.x += dx * player.speed * dt * 60;
+    player.x = Math.max(PLAYER_W / 2, Math.min(W - PLAYER_W / 2, player.x));
+
+    // Update items
+    for (let i = items.length - 1; i >= 0; i--) {
+      const item = items[i];
+      item.y += item.speed * dt * 60;
+
+      // Off screen
+      if (item.y > H + ITEM_SIZE) {
+        items.splice(i, 1);
+        continue;
+      }
+
+      // Collision with player
+      const distX = Math.abs(item.x - player.x);
+      const distY = Math.abs(item.y - player.y);
+      if (distX < (PLAYER_W / 2 + ITEM_SIZE / 2) * 0.7 && distY < (PLAYER_H / 2 + ITEM_SIZE / 2) * 0.7) {
+        if (item.type === 'bug') {
+          lives--;
+          sndHit();
+          spawnParticles(item.x, item.y, '#f85149', 12);
+          items.splice(i, 1);
+          if (lives <= 0) { endGame(); return; }
+        } else {
+          const pts = item.type === 'gold' ? 50 : 10;
+          score += pts;
+          item.type === 'gold' ? sndGold() : sndCatch();
+          spawnParticles(item.x, item.y, item.type === 'gold' ? '#f0883e' : '#3fb950', 8);
+          items.splice(i, 1);
+        }
+        updateHUD();
+      }
+    }
+  }
+
+  // --- Render ---
+  function render(dt) {
+    ctx.clearRect(0, 0, W, H);
+    drawStars(dt);
+    if (state === 'playing') {
+      drawItems();
+      drawPlayer();
+      updateParticles(dt);
+    }
+    drawScanlines();
+  }
+
+  // --- Game Loop ---
+  function loop(now) {
+    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    lastTime = now;
+    update(dt);
+    render(dt);
+    requestAnimationFrame(loop);
+  }
+  lastTime = performance.now();
+  requestAnimationFrame(loop);
+
+  // --- Input ---
+  document.addEventListener('keydown', e => {
+    keys[e.code] = true;
+    if (e.code === 'Space') {
+      e.preventDefault();
+      if (state === 'start' || state === 'gameover') startGame();
+    }
+  });
+  document.addEventListener('keyup', e => { keys[e.code] = false; });
+
+  // Touch controls
+  canvas.addEventListener('touchstart', e => {
+    e.preventDefault();
+    if (state === 'start' || state === 'gameover') { startGame(); return; }
+    const rect = canvas.getBoundingClientRect();
+    for (const touch of e.touches) {
+      const tx = touch.clientX - rect.left;
+      if (tx < rect.width / 2) {
+        keys['ArrowLeft'] = true;
+      } else {
+        keys['ArrowRight'] = true;
+      }
+    }
+  }, { passive: false });
+  canvas.addEventListener('touchend', e => {
+    keys['ArrowLeft'] = false;
+    keys['ArrowRight'] = false;
+  });
+  canvas.addEventListener('touchmove', e => { e.preventDefault(); }, { passive: false });
+
+  // Buttons
+  $btnAgain.addEventListener('click', () => { if (state === 'gameover') startGame(); });
+
+  // Init HUD
+  $hudHi.textContent = 'HI: ' + hiScore;
+})();
+</script>
+</body>
+</html>
