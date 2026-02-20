@@ -1,0 +1,37 @@
+name: "🏆 Submit High Score"
+description: Submit your high score to the leaderboard!
+title: "🏆 High Score: [SCORE]"
+labels: ["high-score"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🎮 Nice run!
+        Submit your high score below. Remember — no cheating! Scores must be earned through legitimate gameplay.
+
+  - type: input
+    id: score
+    attributes:
+      label: Score
+      description: What was your final score?
+      placeholder: "e.g. 4200"
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: Upload a screenshot of your score (drag and drop an image here). Optional but encouraged!
+      placeholder: Drag and drop your screenshot here
+    validations:
+      required: false
+
+  - type: textarea
+    id: strategy
+    attributes:
+      label: Strategy Tips
+      description: Any tips or strategies you want to share with the community?
+      placeholder: "e.g. I focused on building streaks and avoided the edges..."
+    validations:
+      required: false

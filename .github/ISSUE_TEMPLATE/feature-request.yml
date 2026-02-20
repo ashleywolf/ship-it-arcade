@@ -1,0 +1,33 @@
+name: "✨ Feature Request"
+description: Suggest a new feature or improvement for Ship It Arcade
+title: "✨ Feature: [SHORT DESCRIPTION]"
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 💡 Got an idea?
+        We'd love to hear your suggestions for making Ship It Arcade even better!
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the feature you'd like to see
+      placeholder: Tell us about your idea...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: What area does this feature relate to?
+      options:
+        - Gameplay
+        - Visuals
+        - Audio
+        - Leaderboard
+        - Other
+    validations:
+      required: true

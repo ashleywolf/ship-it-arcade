@@ -1,0 +1,49 @@
+name: "🐛 Bug Report"
+description: Report a bug in Ship It Arcade (the real kind, not the in-game kind!)
+title: "🐛 Bug: [SHORT DESCRIPTION]"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🐛 Found a bug?
+        Not the in-game kind — those are features! Tell us what went wrong so we can fix it.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the bug you encountered
+      placeholder: Tell us what went wrong...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen instead?
+      placeholder: Tell us what should have happened...
+    validations:
+      required: true
+
+  - type: input
+    id: browser-device
+    attributes:
+      label: Browser / Device
+      description: What browser and device were you using?
+      placeholder: "e.g. Chrome 120 on macOS, Safari on iPhone 15"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How bad is it?
+      options:
+        - "Minor"
+        - "Medium"
+        - "Critical — Game-breaking 💥"
+    validations:
+      required: true
